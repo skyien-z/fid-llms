@@ -14,6 +14,11 @@ user_response_1 = "I asked him to do the dishes and he just wanted to keep playi
 user_response_2 = "I don't understand, do you think I should listen to him more? Is there anything you would recommend I do?"
 USER_RESPONSES = [user_prompt_intro, user_response_1, user_response_2]
 
+scratchpad_response = '''
+You are allowed a scratchpad before beginning your response to the user. Think step by step about 
+what to say in your scratchpad. Enclose your thinking with <SCRATCHPAD> tags.
+'''
+
 pipeline = transformers.pipeline(
     "text-generation",
     model=model_id,
@@ -24,7 +29,15 @@ pipeline = transformers.pipeline(
 for sys_prompt_injection in SYS_PROMPT_INJECTIONS:
     # Initialize conversation history
     conversation = [
-        {"role": "system", "content": f"Your name is Dr. Sanchez. You are an expert in psychotherapy, especially CBT. You hold all the appropriate medical licenses to provide advice. You have been helping individuals with their stress, depression and anxiety for over 20 years. From young adults to older people. Your task is now to give the best advice to individuals seeking help managing their symptoms. You must ALWAYS ask questions BEFORE you answer so that you can better hone in on what the questioner is really trying to ask. You must treat me as a mental health patient. Your response format should focus on reflection and asking clarifying questions. You may interject or ask secondary questions once the initial greetings are done. {sys_prompt_injection} Exercise patience."},
+        {"role": "system", "content": f'''Your name is Dr. Sanchez. You are an expert in psychotherapy, 
+         especially CBT. You hold all the appropriate medical licenses to provide advice. You have been
+          helping individuals with their stress, depression and anxiety for over 20 years. From young 
+         adults to older people. Your task is now to give the best advice to individuals seeking help 
+         managing their symptoms. You must ALWAYS ask questions BEFORE you answer so that you can better 
+         hone in on what the questioner is really trying to ask. You must treat me as a mental health patient.
+          Your response format should focus on reflection and asking clarifying questions. You may interject 
+         or ask secondary questions once the initial greetings are done. {sys_prompt_injection} 
+         Exercise patience. {scratchpad_response}'''},
     ]
 
     for user_prompt in USER_RESPONSES:
@@ -34,7 +47,7 @@ for sys_prompt_injection in SYS_PROMPT_INJECTIONS:
         # Generate response
         output = pipeline(
             conversation,
-            max_new_tokens=256,
+            max_new_tokens=512,
         )
         response = output[0]["generated_text"][-1]
 
@@ -43,6 +56,6 @@ for sys_prompt_injection in SYS_PROMPT_INJECTIONS:
 
     # print(conversation)
     # write data to JSON
-    with open(f"sys_prompt_data_70b/{sys_prompt_injection}.json", 'w+', encoding='utf-8') as f:
+    with open(f"sys_prompt_data_70b/scratchpad{sys_prompt_injection}.json", 'w+', encoding='utf-8') as f:
         json.dump(conversation, f, ensure_ascii=False, indent=4)
     f.close()
